@@ -1,0 +1,391 @@
+<div class="container mx-auto px-6 py-8 max-w-6xl">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-3xl font-bold text-gray-900"><%= domain.domain %></h2>
+      <p class="text-gray-500 mt-1">Domain ID: <%= domain.id %></p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/domains" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+        <i class="fas fa-arrow-left mr-2"></i>Back to List
+      </a>
+    </div>
+  </div>
+  
+  <!-- Clients Section -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-users text-gray-700"></i>
+        <h3 class="text-xl font-semibold text-gray-900">Clients</h3>
+        <span class="text-sm text-gray-500">(<%= domain.clients.length %>)</span>
+      </div>
+      <button onclick="toggleClientForm()" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+        <i class="fas fa-plus mr-2"></i>Add Client
+      </button>
+    </div>
+    
+    <!-- Add Client Form -->
+    <div id="clientForm" class="hidden mb-4 bg-white rounded-lg shadow-sm border-2 border-green-500 p-4">
+      <h4 class="font-semibold mb-3" id="clientFormTitle">New Client</h4>
+      <form action="/api/domains/<%= domain.id %>/clients" method="POST" id="addClientForm">
+        <input type="hidden" name="_csrf" value="<%= typeof _csrf !== 'undefined' ? _csrf : '' %>">
+        <input type="hidden" name="_method" id="clientFormMethod" value="">
+        <input type="hidden" name="clientId" id="clientId" value="">
+        
+        <!-- Auth Type Selection -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Authentication Type</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="authType" value="standard" checked onchange="toggleAuthFields()">
+              <span class="text-sm">Standard (Password + Codecs)</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="authType" value="reghook" onchange="toggleAuthFields()">
+              <span class="text-sm">RegHook (URL-based)</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <input type="text" name="username" id="clientUsername" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+        
+        <!-- Standard Auth Fields -->
+        <div id="standardAuthFields">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input type="password" name="password" id="passwordField" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          </div>
+          
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Codecs</label>
+            <div class="flex flex-wrap gap-2" id="codecCheckboxes">
+              <% allowedCodecs.forEach(function(codec) { %>
+                <label class="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer">
+                  <input type="checkbox" name="codecs[]" value="<%= codec %>" class="rounded codec-checkbox">
+                  <span class="text-sm"><%= codec %></span>
+                </label>
+              <% }); %>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Dialplan Routes</label>
+            <div id="dialplanEntries" class="space-y-2 mb-2">
+              <!-- Dialplan entries will be added here -->
+            </div>
+            <div class="flex gap-2">
+              <input 
+                type="text" 
+                id="dialplanDigits" 
+                placeholder="Digits (e.g., 1234)" 
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input 
+                type="url" 
+                id="dialplanUrl" 
+                placeholder="URL (e.g., https://example.com/route)" 
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <button type="button" onclick="addDialplanEntry()" class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <input type="hidden" name="dialplan" id="dialplanHidden" value="{}">
+            <p class="text-xs text-gray-500 mt-1">Add routing rules with digit patterns and destination URLs</p>
+          </div>
+        </div>
+        
+        <!-- RegHook Auth Fields -->
+        <div id="reghookAuthFields" class="hidden">
+          <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1">RegHook URL</label>
+            <input type="url" name="reghook" id="reghookField" placeholder="https://example.com/register" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+            <p class="text-xs text-gray-500 mt-1">URL to be called for registration authentication</p>
+          </div>
+        </div>
+        
+        <div class="flex gap-2">
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+            <i class="fas fa-save mr-2"></i>Save
+          </button>
+          <button type="button" onclick="cancelClientEdit()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Clients List -->
+    <div class="space-y-3">
+      <% if (domain.clients.length === 0) { %>
+        <p class="text-gray-500 text-center py-8">No clients yet. Add your first client!</p>
+      <% } %>
+      
+      <% domain.clients.forEach(function(client) { %>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-3">
+                <h4 class="font-semibold text-gray-900"><%= client.username %></h4>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded">ID: <%= client.id %></span>
+                <% if (client.authType === 'standard') { %>
+                  <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Standard Auth</span>
+                <% } else { %>
+                  <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">RegHook Auth</span>
+                <% } %>
+              </div>
+              
+              <% if (client.authType === 'standard') { %>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span class="text-gray-500">Password:</span>
+                    <span class="ml-2 font-mono">••••••••</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">Codecs:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <% if (client.codecs && client.codecs.length > 0) { %>
+                        <% client.codecs.forEach(function(codec) { %>
+                          <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs"><%= codec %></span>
+                        <% }); %>
+                      <% } else { %>
+                        <span class="text-gray-400 text-xs">None</span>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+                
+                <% if (client.dialplan && Object.keys(client.dialplan).length > 0) { %>
+                  <div class="mt-3 text-sm">
+                    <span class="text-gray-500">Dialplan Routes:</span>
+                    <div class="mt-1 space-y-1">
+                      <% Object.entries(client.dialplan).forEach(function([digits, url]) { %>
+                        <div class="bg-gray-50 rounded p-2 flex items-center justify-between">
+                          <div class="flex-1">
+                            <span class="font-semibold text-gray-700"><%= digits %></span>
+                            <span class="mx-2 text-gray-400">→</span>
+                            <span class="text-xs text-gray-600 break-all"><%= url %></span>
+                          </div>
+                        </div>
+                      <% }); %>
+                    </div>
+                  </div>
+                <% } %>
+              <% } else { %>
+                <div class="text-sm">
+                  <span class="text-gray-500">RegHook URL:</span>
+                  <div class="bg-purple-50 rounded p-2 mt-1 font-mono text-xs break-all">
+                    <%= client.reghook %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+            
+            <div class="flex gap-2">
+              <button onclick="editClient(<%= client.id %>, '<%= client.username %>', '<%= client.authType %>', '<%= client.password || '' %>', '<%= client.reghook || '' %>', <%= JSON.stringify(client.codecs || []) %>, <%= JSON.stringify(client.dialplan || {}) %>)" class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-edit"></i>
+              </button>
+              <form action="/api/clients/<%= client.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this client?');">
+                <button type="submit" class="text-red-600 hover:text-red-800">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+  
+  <!-- Trunks Section -->
+  <div>
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-phone text-gray-700"></i>
+        <h3 class="text-xl font-semibold text-gray-900">Trunks</h3>
+        <span class="text-sm text-gray-500">(<%= domain.trunks.length %>)</span>
+      </div>
+      <button onclick="toggleTrunkForm()" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+        <i class="fas fa-plus mr-2"></i>Add Trunk
+      </button>
+    </div>
+    
+    <!-- Add Trunk Form -->
+    <div id="trunkForm" class="hidden mb-4 bg-white rounded-lg shadow-sm border-2 border-purple-500 p-4">
+      <h4 class="font-semibold mb-3" id="trunkFormTitle">New Trunk</h4>
+      <form action="/api/domains/<%= domain.id %>/trunks" method="POST" id="addTrunkForm">
+        <input type="hidden" name="_csrf" value="<%= typeof _csrf !== 'undefined' ? _csrf : '' %>">
+        <input type="hidden" name="_method" id="trunkFormMethod" value="">
+        <input type="hidden" name="trunkId" id="trunkId" value="">
+        
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Inbound IPs (CIDR)</label>
+          <div id="inboundEntries" class="space-y-2 mb-2">
+            <!-- Inbound entries will be added here -->
+          </div>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="inboundIp" 
+              placeholder="192.168.1.0/24" 
+              pattern="^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$"
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+            />
+            <button type="button" onclick="addInboundEntry()" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <input type="hidden" name="inbound" id="inboundHidden" value="[]">
+          <p class="text-xs text-gray-500 mt-1">Add allowed inbound IP addresses in CIDR notation</p>
+        </div>
+        
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Outbound Configuration</label>
+          <div class="space-y-2">
+            <input 
+              type="text" 
+              name="outboundHost" 
+              id="outboundHost"
+              placeholder="Host (e.g., sip.provider.com)" 
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <div class="grid grid-cols-2 gap-2">
+              <input 
+                type="text" 
+                name="outboundUsername" 
+                id="outboundUsername"
+                placeholder="Username (optional)" 
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input 
+                type="password" 
+                name="outboundPassword" 
+                id="outboundPassword"
+                placeholder="Password (optional)" 
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+          <input type="hidden" name="outbound" id="outboundHidden">
+        </div>
+        
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Dialplan Routes</label>
+          <div id="trunkDialplanEntries" class="space-y-2 mb-2">
+            <!-- Trunk dialplan entries will be added here -->
+          </div>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="trunkDialplanDigits" 
+              placeholder="Digits (e.g., 1234)" 
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <input 
+              type="url" 
+              id="trunkDialplanUrl" 
+              placeholder="URL (e.g., https://example.com/route)" 
+              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <button type="button" onclick="addTrunkDialplanEntry()" class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <input type="hidden" name="dialplan" id="trunkDialplanHidden" value="{}">
+          <p class="text-xs text-gray-500 mt-1">Add routing rules with digit patterns and destination URLs</p>
+        </div>
+        
+        <div class="flex gap-2">
+          <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
+            <i class="fas fa-save mr-2"></i>Save
+          </button>
+          <button type="button" onclick="cancelTrunkEdit()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Trunks List -->
+    <div class="space-y-3">
+      <% if (domain.trunks.length === 0) { %>
+        <p class="text-gray-500 text-center py-8">No trunks yet. Add your first trunk!</p>
+      <% } %>
+      
+      <% domain.trunks.forEach(function(trunk) { %>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-3">
+                <h4 class="font-semibold text-gray-900">Trunk</h4>
+                <span class="text-xs bg-gray-100 px-2 py-1 rounded">ID: <%= trunk.id %></span>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span class="text-gray-500 font-medium">Inbound IPs:</span>
+                  <div class="mt-1 space-y-1">
+                    <% if (trunk.inbound && trunk.inbound.length > 0) { %>
+                      <% trunk.inbound.forEach(function(ip) { %>
+                        <div class="bg-green-50 text-green-700 px-2 py-1 rounded font-mono text-xs">
+                          <%= ip %>
+                        </div>
+                      <% }); %>
+                    <% } else { %>
+                      <span class="text-gray-400 text-xs">None</span>
+                    <% } %>
+                  </div>
+                </div>
+                
+                <div>
+                  <span class="text-gray-500 font-medium">Outbound:</span>
+                  <div class="mt-1 bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs">
+                    <div class="font-mono"><%= trunk.outbound.host %></div>
+                    <% if (trunk.outbound.username) { %>
+                      <div class="text-xs mt-1">User: <%= trunk.outbound.username %></div>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              
+              <% if (trunk.dialplan && Object.keys(trunk.dialplan).length > 0) { %>
+                <div class="mt-3 text-sm">
+                  <span class="text-gray-500">Dialplan Routes:</span>
+                  <div class="mt-1 space-y-1">
+                    <% Object.entries(trunk.dialplan).forEach(function([digits, url]) { %>
+                      <div class="bg-gray-50 rounded p-2 flex items-center justify-between">
+                        <div class="flex-1">
+                          <span class="font-semibold text-gray-700"><%= digits %></span>
+                          <span class="mx-2 text-gray-400">→</span>
+                          <span class="text-xs text-gray-600 break-all"><%= url %></span>
+                        </div>
+                      </div>
+                    <% }); %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+            
+            <div class="flex gap-2">
+              <button onclick='editTrunk(<%= trunk.id %>, <%= JSON.stringify(trunk.inbound || []) %>, <%= JSON.stringify(trunk.outbound) %>, <%= JSON.stringify(trunk.dialplan || {}) %>)' class="text-blue-600 hover:text-blue-800">
+                <i class="fas fa-edit"></i>
+              </button>
+              <form action="/api/trunks/<%= trunk.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this trunk?');">
+                <button type="submit" class="text-red-600 hover:text-red-800">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+</div>
+
+<!-- Pass domain ID to JavaScript -->
+<div data-domain-id="<%= domain.id %>" style="display: none;"></div>
