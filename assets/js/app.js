@@ -63,6 +63,23 @@ document.addEventListener('DOMContentLoaded', function() {
       
       document.getElementById('outboundHidden').value = JSON.stringify(outboundData);
     });
+    // Handle trunk codecs
+    const trunkCodecCheckboxes = trunkForm.querySelectorAll('input[name="trunkCodecs[]"]:checked:not(:disabled)');
+    if (trunkCodecCheckboxes.length > 0) {
+    const existingInput = trunkForm.querySelector('input[name="codecs"]');
+    if (existingInput) {
+        existingInput.remove();
+    }
+    
+    const codecs = Array.from(trunkCodecCheckboxes).map(cb => cb.value);
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'codecs';
+    hiddenInput.value = JSON.stringify(codecs);
+    trunkForm.appendChild(hiddenInput);
+    
+    trunkCodecCheckboxes.forEach(cb => cb.disabled = true);
+    }
   }
 });
 
@@ -116,7 +133,7 @@ function updateDialplanDisplay() {
 
 // ========== CLIENT FORM FUNCTIONS ==========
 
-function editClient(id, username, authType, password, reghook, codecs, dialplan) {
+function editClient(id, label, username, authType, password, reghook, codecs, dialplan) {
   editingClientId = id;
   
   document.getElementById('clientForm').classList.remove('hidden');
@@ -127,6 +144,7 @@ function editClient(id, username, authType, password, reghook, codecs, dialplan)
   document.getElementById('clientFormMethod').value = 'PUT';
   document.getElementById('clientId').value = id;
   
+  document.getElementById('clientLabel').value = label;
   document.getElementById('clientUsername').value = username;
   
   document.querySelector(`input[name="authType"][value="${authType}"]`).checked = true;
@@ -312,7 +330,7 @@ function updateInboundDisplay() {
 
 // ========== TRUNK FORM FUNCTIONS ==========
 
-function editTrunk(id, inbound, outbound, dialplan) {
+function editTrunk(id, label, inbound, outbound, codecs, dialplan) {
   editingTrunkId = id;
   
   document.getElementById('trunkForm').classList.remove('hidden');
@@ -323,6 +341,8 @@ function editTrunk(id, inbound, outbound, dialplan) {
   document.getElementById('trunkFormMethod').value = 'PUT';
   document.getElementById('trunkId').value = id;
   
+  document.getElementById('trunkLabel').value = label;
+  
   inboundIps = inbound || [];
   updateInboundDisplay();
   
@@ -330,6 +350,10 @@ function editTrunk(id, inbound, outbound, dialplan) {
   document.getElementById('outboundUsername').value = outbound.username || '';
   document.getElementById('outboundPassword').value = outbound.password || '';
   
+  document.querySelectorAll('.trunk-codec-checkbox').forEach(cb => {
+    cb.checked = codecs.includes(cb.value);
+  });
+
   trunkDialplanData = dialplan || {};
   updateTrunkDialplanDisplay();
   

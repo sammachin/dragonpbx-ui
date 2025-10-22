@@ -18,6 +18,11 @@ module.exports = {
     trunks: {
       collection: 'trunk',
       via: 'domain'
+    },
+    
+    users: {
+      collection: 'user',
+      via: 'domains'
     }
   }
 };

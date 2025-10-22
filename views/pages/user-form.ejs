@@ -1,0 +1,128 @@
+<div class="container mx-auto px-6 py-8 max-w-2xl">
+  <h2 class="text-3xl font-bold text-gray-900 mb-6">
+    <%= typeof editUser !== 'undefined' ? 'Edit User' : 'New User' %>
+  </h2>
+  
+  <form action="<%= typeof editUser !== 'undefined' ? '/api/users/' + editUser.id + '?_method=PUT' : '/api/users' %>" method="POST" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
+          First Name
+        </label>
+        <input 
+          type="text" 
+          id="firstName" 
+          name="firstName" 
+          value="<%= typeof editUser !== 'undefined' ? editUser.firstName : '' %>"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+      
+      <div>
+        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
+          Last Name
+        </label>
+        <input 
+          type="text" 
+          id="lastName" 
+          name="lastName" 
+          value="<%= typeof editUser !== 'undefined' ? editUser.lastName : '' %>"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+    </div>
+    
+    <div class="mb-4">
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+        Email
+      </label>
+      <input 
+        type="email" 
+        id="email" 
+        name="email" 
+        value="<%= typeof editUser !== 'undefined' ? editUser.email : '' %>"
+        required
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+    
+    <div class="mb-4">
+      <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+        Password <%= typeof editUser !== 'undefined' ? '(leave blank to keep current)' : '' %>
+      </label>
+      <input 
+        type="password" 
+        id="password" 
+        name="password" 
+        <%= typeof editUser === 'undefined' ? 'required' : '' %>
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+    
+    <div class="mb-4">
+      <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
+        Role
+      </label>
+      <select 
+        id="role" 
+        name="role" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      >
+        <option value="user" <%= typeof editUser !== 'undefined' && editUser.role === 'user' ? 'selected' : '' %>>User</option>
+        <option value="admin" <%= typeof editUser !== 'undefined' && editUser.role === 'admin' ? 'selected' : '' %>>Admin</option>
+      </select>
+    </div>
+    
+    <div class="mb-4" id="domainAssignment">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Assigned Domains (only for regular users)
+      </label>
+      <div class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+        <% if (typeof domains !== 'undefined' && domains.length > 0) { %>
+          <% domains.forEach(function(domain) { %>
+            <label class="flex items-center gap-2 py-2 hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                name="domainIds[]" 
+                value="<%= domain.id %>" 
+                class="rounded domain-checkbox"
+                <%= typeof editUser !== 'undefined' && editUser.domains.some(d => d.id === domain.id) ? 'checked' : '' %>
+              />
+              <span class="text-sm"><%= domain.domain %></span>
+            </label>
+          <% }); %>
+        <% } else { %>
+          <p class="text-sm text-gray-500">No domains available</p>
+        <% } %>
+      </div>
+    </div>
+    
+    <div class="flex gap-2">
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <i class="fas fa-save mr-2"></i>Save
+      </button>
+      <a href="/users" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+        <i class="fas fa-times mr-2"></i>Cancel
+      </a>
+    </div>
+  </form>
+</div>
+
+<script>
+// Hide domain assignment for admin users
+document.getElementById('role').addEventListener('change', function() {
+  const domainAssignment = document.getElementById('domainAssignment');
+  if (this.value === 'admin') {
+    domainAssignment.style.display = 'none';
+    // Uncheck all domains for admin
+    document.querySelectorAll('.domain-checkbox').forEach(cb => cb.checked = false);
+  } else {
+    domainAssignment.style.display = 'block';
+  }
+});
+
+// Trigger on page load
+document.getElementById('role').dispatchEvent(new Event('change'));
+</script>

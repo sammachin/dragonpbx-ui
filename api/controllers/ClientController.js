@@ -7,6 +7,7 @@ module.exports = {
       const authType = req.body.authType || 'standard';
       
       const clientData = {
+        label: req.body.label,
         username: req.body.username,
         authType: authType,
         domain: req.params.domainId
@@ -37,6 +38,7 @@ module.exports = {
       const authType = req.body.authType || client.authType;
       
       const updateData = {
+        label: req.body.label,
         username: req.body.username,
         authType: authType
       };

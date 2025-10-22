@@ -5,9 +5,11 @@ module.exports = {
   create: async function(req, res) {
     try {
       const trunkData = {
+        label: req.body.label,
         domain: req.params.domainId,
         inbound: req.body.inbound ? JSON.parse(req.body.inbound) : [],
         outbound: req.body.outbound ? JSON.parse(req.body.outbound) : { host: '' },
+        codecs: req.body.codecs ? JSON.parse(req.body.codecs) : [],
         dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {}
       };
       
@@ -27,8 +29,10 @@ module.exports = {
       }
       
       const updateData = {
+        label: req.body.label,
         inbound: req.body.inbound ? JSON.parse(req.body.inbound) : [],
         outbound: req.body.outbound ? JSON.parse(req.body.outbound) : {},
+        codecs: req.body.codecs ? JSON.parse(req.body.codecs) : [],
         dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {}
       };
       

@@ -6,6 +6,11 @@
  */
 module.exports = {
   attributes: {
+    label: {
+      type: 'string',
+      required: true
+    },
+
     username: {
       type: 'string',
       required: true
@@ -36,10 +41,7 @@ module.exports = {
       defaultsTo: [],
       description: 'Array of allowed codecs (standard auth only)',
       custom: function(value) {
-        const allowedCodecs = [
-          'PCMU', 'PCMA', 'G722', 'G729', 
-          'opus', 'GSM', 'iLBC', 'speex'
-        ];
+        const allowedCodecs = ['PCMU', 'PCMA', 'G722', 'opus', 'GSM'];
         if (!Array.isArray(value)) return false;
         return value.every(codec => allowedCodecs.includes(codec));
       }

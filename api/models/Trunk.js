@@ -3,6 +3,12 @@
  */
 module.exports = {
   attributes: {
+    label: {
+      type: 'string',
+      required: true,
+      unique: false,
+      description: 'label'
+    },
     inbound: {
       type: 'json',
       defaultsTo: [],
@@ -31,6 +37,17 @@ module.exports = {
       description: 'Key-value pairs for dialplan configuration'
     },
     
+    codecs: {
+    type: 'json',
+    defaultsTo: [],
+    description: 'Array of allowed codecs',
+    custom: function(value) {
+        const allowedCodecs = ['PCMU', 'PCMA', 'G722', 'opus', 'GSM'];
+        if (!Array.isArray(value)) return false;
+        return value.every(codec => allowedCodecs.includes(codec));
+    }
+    },
+        
     domain: {
       model: 'domain',
       required: true

@@ -32,6 +32,12 @@
         <input type="hidden" name="_method" id="clientFormMethod" value="">
         <input type="hidden" name="clientId" id="clientId" value="">
         
+        <!-- Label Field -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+          <input type="text" name="label" id="clientLabel" required placeholder="e.g., Main Reception Phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+        
         <!-- Auth Type Selection -->
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">Authentication Type</label>
@@ -129,13 +135,17 @@
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-3">
-                <h4 class="font-semibold text-gray-900"><%= client.username %></h4>
+                <h4 class="font-semibold text-gray-900 text-lg"><%= client.label %></h4>
                 <span class="text-xs bg-gray-100 px-2 py-1 rounded">ID: <%= client.id %></span>
                 <% if (client.authType === 'standard') { %>
                   <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Standard Auth</span>
                 <% } else { %>
                   <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">RegHook Auth</span>
                 <% } %>
+              </div>
+              
+              <div class="text-sm text-gray-600 mb-2">
+                <span class="font-medium">Username:</span> <span class="font-mono"><%= client.username %></span>
               </div>
               
               <% if (client.authType === 'standard') { %>
@@ -185,7 +195,7 @@
             </div>
             
             <div class="flex gap-2">
-              <button onclick="editClient(<%= client.id %>, '<%= client.username %>', '<%= client.authType %>', '<%= client.password || '' %>', '<%= client.reghook || '' %>', <%= JSON.stringify(client.codecs || []) %>, <%= JSON.stringify(client.dialplan || {}) %>)" class="text-blue-600 hover:text-blue-800">
+              <button onclick="editClient(<%= client.id %>, '<%= client.label %>', '<%= client.username %>', '<%= client.authType %>', '<%= client.password || '' %>', '<%= client.reghook || '' %>', <%= JSON.stringify(client.codecs || []) %>, <%= JSON.stringify(client.dialplan || {}) %>)" class="text-blue-600 hover:text-blue-800">
                 <i class="fas fa-edit"></i>
               </button>
               <form action="/api/clients/<%= client.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this client?');">
@@ -220,6 +230,12 @@
         <input type="hidden" name="_csrf" value="<%= typeof _csrf !== 'undefined' ? _csrf : '' %>">
         <input type="hidden" name="_method" id="trunkFormMethod" value="">
         <input type="hidden" name="trunkId" id="trunkId" value="">
+        
+        <!-- Label Field -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+          <input type="text" name="label" id="trunkLabel" required placeholder="e.g., Main SIP Provider" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
         
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Inbound IPs (CIDR)</label>
@@ -274,6 +290,18 @@
         </div>
         
         <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Codecs</label>
+          <div class="flex flex-wrap gap-2" id="trunkCodecCheckboxes">
+            <% allowedCodecs.forEach(function(codec) { %>
+              <label class="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer">
+                <input type="checkbox" name="trunkCodecs[]" value="<%= codec %>" class="rounded trunk-codec-checkbox">
+                <span class="text-sm"><%= codec %></span>
+              </label>
+            <% }); %>
+          </div>
+        </div>
+        
+        <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Dialplan Routes</label>
           <div id="trunkDialplanEntries" class="space-y-2 mb-2">
             <!-- Trunk dialplan entries will be added here -->
@@ -321,7 +349,7 @@
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-3">
-                <h4 class="font-semibold text-gray-900">Trunk</h4>
+                <h4 class="font-semibold text-gray-900 text-lg"><%= trunk.label %></h4>
                 <span class="text-xs bg-gray-100 px-2 py-1 rounded">ID: <%= trunk.id %></span>
               </div>
               
@@ -352,6 +380,19 @@
                 </div>
               </div>
               
+              <div class="mt-3 text-sm">
+                <span class="text-gray-500">Codecs:</span>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  <% if (trunk.codecs && trunk.codecs.length > 0) { %>
+                    <% trunk.codecs.forEach(function(codec) { %>
+                      <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs"><%= codec %></span>
+                    <% }); %>
+                  <% } else { %>
+                    <span class="text-gray-400 text-xs">None</span>
+                  <% } %>
+                </div>
+              </div>
+              
               <% if (trunk.dialplan && Object.keys(trunk.dialplan).length > 0) { %>
                 <div class="mt-3 text-sm">
                   <span class="text-gray-500">Dialplan Routes:</span>
@@ -371,7 +412,7 @@
             </div>
             
             <div class="flex gap-2">
-              <button onclick='editTrunk(<%= trunk.id %>, <%= JSON.stringify(trunk.inbound || []) %>, <%= JSON.stringify(trunk.outbound) %>, <%= JSON.stringify(trunk.dialplan || {}) %>)' class="text-blue-600 hover:text-blue-800">
+              <button onclick='editTrunk(<%= trunk.id %>, "<%= trunk.label %>", <%= JSON.stringify(trunk.inbound || []) %>, <%= JSON.stringify(trunk.outbound) %>, <%= JSON.stringify(trunk.codecs || []) %>, <%= JSON.stringify(trunk.dialplan || {}) %>)' class="text-blue-600 hover:text-blue-800">
                 <i class="fas fa-edit"></i>
               </button>
               <form action="/api/trunks/<%= trunk.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this trunk?');">
