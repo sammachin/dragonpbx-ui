@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (password) outboundData.password = password;
       
       document.getElementById('outboundHidden').value = JSON.stringify(outboundData);
-    });
+    
     // Handle trunk codecs
     const trunkCodecCheckboxes = trunkForm.querySelectorAll('input[name="trunkCodecs[]"]:checked:not(:disabled)');
     if (trunkCodecCheckboxes.length > 0) {
@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     trunkCodecCheckboxes.forEach(cb => cb.disabled = true);
     }
+    });
   }
 });
 

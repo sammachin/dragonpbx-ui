@@ -16,7 +16,12 @@ module.exports.policies = {
     'newUser': ['isLoggedIn', 'isAdmin'],
     'editUser': ['isLoggedIn', 'isAdmin']
   },
-  
+
+  // Domain Management requires admin
+  'DomainController': {
+    '*': ['isLoggedIn', 'isAdmin']
+  },
+
   // REST API v1 - Uses bearer token authentication
   'DomainApiController': {
     '*': 'hasBearerToken'

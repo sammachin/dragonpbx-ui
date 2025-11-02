@@ -5,7 +5,7 @@ module.exports.routes = {
   'GET /logout': 'AuthController.logout',
   
   // Page routes
-  'GET /': { view: 'pages/dashboard' },
+  'GET /': 'ViewController.domains',
   'GET /domains': 'ViewController.domains',
   'GET /domains/new': 'ViewController.newDomain',
   'GET /domains/:id': 'ViewController.domainDetail',

@@ -26,7 +26,7 @@ module.exports = {
       description: 'Outbound configuration with host, username (optional), password (optional)',
       custom: function(value) {
         if (typeof value !== 'object') return false;
-        if (!value.host || typeof value.host !== 'string') return false;
+        //if (!value.host || typeof value.host !== 'string') return false;
         return true;
       }
     },

@@ -3,6 +3,7 @@
  */
 module.exports = {
   create: async function(req, res) {
+    console.log(req.body.codecs)
     try {
       const trunkData = {
         label: req.body.label,
