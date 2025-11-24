@@ -47,7 +47,7 @@ module.exports = {
           updatedAt: domain.updatedAt,
           clients: domain.clients.map(client => ({
             id: client.id,
-            label: client.label,
+            label: client.label,  
             username: client.username,
             authType: client.authType,
             password: client.password,
@@ -60,6 +60,12 @@ module.exports = {
           trunks: domain.trunks.map(trunk => ({
             id: trunk.id,
             label: trunk.label,
+            authType: trunk.authType,
+            regUser: trunk.registrationUsername,
+            regPass: trunk.registraitonPassword,
+            regHost: trunk.registrationServer,
+            authUser: trunk.authenticationUsername,
+            authPass: trunk.authenticationPassword,
             inbound: trunk.inbound,
             outbound: trunk.outbound,
             codecs: trunk.codecs,
@@ -130,16 +136,34 @@ module.exports = {
           createdAt: client.createdAt,
           updatedAt: client.updatedAt
         })),
-        trunks: domain.trunks.map(trunk => ({
-          id: trunk.id,
-          label: trunk.label,
-          inbound: trunk.inbound,
-          outbound: trunk.outbound,
-          codecs: trunk.codecs,
-          dialplan: trunk.dialplan,
-          createdAt: trunk.createdAt,
-          updatedAt: trunk.updatedAt
-        })),
+        trunks: domain.trunks.map(trunk => {
+          const trunkData = {
+            id: trunk.id,
+            label: trunk.label,
+            authType: trunk.authType,
+            inbound: trunk.inbound,
+            outbound: trunk.outbound,
+            codecs: trunk.codecs,
+            dialplan: trunk.dialplan,
+            createdAt: trunk.createdAt,
+            updatedAt: trunk.updatedAt
+          };
+
+          // Only include registration fields if authType is 'registration'
+          if (trunk.authType === 'registration') {
+            trunkData.regUser = trunk.registrationUsername;
+            trunkData.regPass = trunk.registrationPassword;
+            trunkData.regHost = trunk.registrationServer;
+          }
+
+          // Only include authentication fields if authType is 'authentication'
+          if (trunk.authType === 'authentication') {
+            trunkData.authUser = trunk.authenticationUsername;
+            trunkData.authPass = trunk.authenticationPassword;
+          }
+
+          return trunkData;
+        }),
         users: domain.users.map(u => ({
           id: u.id,
           email: u.email,

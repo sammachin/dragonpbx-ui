@@ -237,57 +237,130 @@
         <input type="hidden" name="_csrf" value="<%= typeof _csrf !== 'undefined' ? _csrf : '' %>">
         <input type="hidden" name="_method" id="trunkFormMethod" value="">
         <input type="hidden" name="trunkId" id="trunkId" value="">
+        <input type="hidden" name="authType" id="authTypeHidden" value="ip">
         
         <!-- Label Field -->
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
           <input type="text" name="label" id="trunkLabel" required placeholder="e.g., Main SIP Provider" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
         </div>
-        
+
+        <!-- Authentication Type Field -->
         <div class="mb-3">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Inbound IPs (CIDR)</label>
-          <div id="inboundEntries" class="space-y-2 mb-2">
-            <!-- Inbound entries will be added here -->
+          <label class="block text-sm font-medium text-gray-700 mb-2">Authentication Type</label>
+          <div class="flex gap-3">
+            <label class="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+              <input type="radio" name="trunkAuthType" value="ip" id="trunkAuthTypeIp" checked onchange="toggleTrunkAuthType()" class="text-purple-600">
+              <span class="text-sm font-medium">IP-based</span>
+            </label>
+            <label class="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+              <input type="radio" name="trunkAuthType" value="authentication" id="trunkAuthTypeAuthentication" onchange="toggleTrunkAuthType()" class="text-purple-600">
+              <span class="text-sm font-medium">Authentication</span>
+            </label>
+            <label class="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 cursor-pointer">
+              <input type="radio" name="trunkAuthType" value="registration" id="trunkAuthTypeRegistration" onchange="toggleTrunkAuthType()" class="text-purple-600">
+              <span class="text-sm font-medium">Registration</span>
+            </label>
           </div>
-          <div class="flex gap-2">
-            <input 
-              type="text" 
-              id="inboundIp" 
-              placeholder="192.168.1.0/24" 
-              pattern="^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$"
-              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
-            />
-            <button type="button" onclick="addInboundEntry()" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-              <i class="fas fa-plus"></i>
-            </button>
-          </div>
-          <input type="hidden" name="inbound" id="inboundHidden" value="[]">
-          <p class="text-xs text-gray-500 mt-1">Add allowed inbound IP addresses in CIDR notation</p>
         </div>
-        
+
+        <!-- Inbound Authentication Section -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Inbound Authentication</label>
+
+          <!-- IP-based Fields (shown by default) -->
+          <div id="ipBasedFields">
+            <div id="inboundEntries" class="space-y-2 mb-2">
+              <!-- Inbound entries will be added here -->
+            </div>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                id="inboundIp"
+                placeholder="192.168.1.0/24"
+                pattern="^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+              />
+              <button type="button" onclick="addInboundEntry()" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <input type="hidden" name="inbound" id="inboundHidden" value="[]">
+            <p class="text-xs text-gray-500 mt-1">Add allowed inbound IP addresses in CIDR notation</p>
+          </div>
+
+          <!-- Authentication Fields (hidden by default) -->
+          <div id="authenticationFields" class="hidden">
+            <div class="space-y-2 bg-gray-50 p-3 rounded-lg">
+              <input
+                type="text"
+                name="authenticationUsername"
+                id="authenticationUsername"
+                placeholder="Username"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="password"
+                name="authenticationPassword"
+                id="authenticationPassword"
+                placeholder="Password"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          <!-- Registration Fields (hidden by default) -->
+          <div id="registrationFields" class="hidden">
+            <div class="space-y-2 bg-gray-50 p-3 rounded-lg">
+              <input
+                type="text"
+                name="registrationUsername"
+                id="registrationUsername"
+                placeholder="Username"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="password"
+                name="registrationPassword"
+                id="registrationPassword"
+                placeholder="Password"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="text"
+                name="registrationServer"
+                id="registrationServer"
+                placeholder="Server (e.g., sip.provider.com)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Outbound Configuration (always visible) -->
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Outbound Configuration</label>
           <div class="space-y-2">
-            <input 
-              type="text" 
-              name="outboundHost" 
+            <input
+              type="text"
+              name="outboundHost"
               id="outboundHost"
-              placeholder="Host (e.g., sip.provider.com)" 
+              placeholder="Host (e.g., sip.provider.com)"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
             <div class="grid grid-cols-2 gap-2">
-              <input 
-                type="text" 
-                name="outboundUsername" 
+              <input
+                type="text"
+                name="outboundUsername"
                 id="outboundUsername"
-                placeholder="Username (optional)" 
+                placeholder="Username (optional)"
                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
-              <input 
-                type="password" 
-                name="outboundPassword" 
+              <input
+                type="password"
+                name="outboundPassword"
                 id="outboundPassword"
-                placeholder="Password (optional)" 
+                placeholder="Password (optional)"
                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
             </div>
@@ -357,11 +430,36 @@
               <div class="flex items-center gap-3 mb-3">
                 <h4 class="font-semibold text-gray-900 text-lg"><%= trunk.label %></h4>
                 <span class="text-xs bg-gray-100 px-2 py-1 rounded">ID: <%= trunk.id %></span>
+                <span class="text-xs <%= (trunk.authType === 'registration') ? 'bg-blue-100 text-blue-700' : (trunk.authType === 'authentication') ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700' %> px-2 py-1 rounded font-medium">
+                  <%= (trunk.authType === 'registration') ? 'Registration' : (trunk.authType === 'authentication') ? 'Authentication' : 'IP-based' %>
+                </span>
               </div>
-              
-              <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span class="text-gray-500 font-medium">Inbound IPs:</span>
+
+              <!-- Inbound Authentication Display -->
+              <div class="mb-3">
+                <span class="text-gray-500 font-medium text-sm">Inbound Authentication:</span>
+                <% if (trunk.authType === 'registration') { %>
+                  <!-- Registration display -->
+                  <div class="mt-1 space-y-2">
+                    <div class="bg-blue-50 text-blue-700 px-3 py-2 rounded text-xs">
+                      <div class="font-semibold">Username:</div>
+                      <div class="font-mono"><%= trunk.registrationUsername || 'N/A' %></div>
+                    </div>
+                    <div class="bg-purple-50 text-purple-700 px-3 py-2 rounded text-xs">
+                      <div class="font-semibold">Server:</div>
+                      <div class="font-mono"><%= trunk.registrationServer || 'N/A' %></div>
+                    </div>
+                  </div>
+                <% } else if (trunk.authType === 'authentication') { %>
+                  <!-- Authentication display -->
+                  <div class="mt-1">
+                    <div class="bg-yellow-50 text-yellow-700 px-3 py-2 rounded text-xs">
+                      <div class="font-semibold">Username:</div>
+                      <div class="font-mono"><%= trunk.authenticationUsername || 'N/A' %></div>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <!-- IP-based display -->
                   <div class="mt-1 space-y-1">
                     <% if (trunk.inbound && trunk.inbound.length > 0) { %>
                       <% trunk.inbound.forEach(function(ip) { %>
@@ -373,16 +471,17 @@
                       <span class="text-gray-400 text-xs">None</span>
                     <% } %>
                   </div>
-                </div>
-                
-                <div>
-                  <span class="text-gray-500 font-medium">Outbound:</span>
-                  <div class="mt-1 bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs">
-                    <div class="font-mono"><%= trunk.outbound.host %></div>
-                    <% if (trunk.outbound.username) { %>
-                      <div class="text-xs mt-1">User: <%= trunk.outbound.username %></div>
-                    <% } %>
-                  </div>
+                <% } %>
+              </div>
+
+              <!-- Outbound Configuration (always shown) -->
+              <div class="mb-3">
+                <span class="text-gray-500 font-medium text-sm">Outbound:</span>
+                <div class="mt-1 bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs">
+                  <div class="font-mono"><%= trunk.outbound.host || 'Not configured' %></div>
+                  <% if (trunk.outbound.username) { %>
+                    <div class="text-xs mt-1">User: <%= trunk.outbound.username %></div>
+                  <% } %>
                 </div>
               </div>
               
@@ -418,7 +517,21 @@
             </div>
             
             <div class="flex gap-2">
-              <button onclick='editTrunk(<%= trunk.id %>, "<%= trunk.label %>", <%= JSON.stringify(trunk.inbound || []) %>, <%= JSON.stringify(trunk.outbound) %>, <%= JSON.stringify(trunk.codecs || []) %>, <%= JSON.stringify(trunk.dialplan || {}) %>)' class="text-blue-600 hover:text-blue-800">
+              <button
+                data-trunk-id="<%= trunk.id %>"
+                data-trunk-label="<%= trunk.label %>"
+                data-trunk-authtype="<%= trunk.authType || 'ip' %>"
+                data-trunk-inbound='<%= JSON.stringify(trunk.inbound || []) %>'
+                data-trunk-outbound='<%= JSON.stringify(trunk.outbound) %>'
+                data-trunk-codecs='<%= JSON.stringify(trunk.codecs || []) %>'
+                data-trunk-dialplan='<%= JSON.stringify(trunk.dialplan || {}) %>'
+                data-trunk-auth-username="<%= trunk.authenticationUsername || '' %>"
+                data-trunk-auth-password="<%= trunk.authenticationPassword || '' %>"
+                data-trunk-reg-username="<%= trunk.registrationUsername || '' %>"
+                data-trunk-reg-password="<%= trunk.registrationPassword || '' %>"
+                data-trunk-reg-server="<%= trunk.registrationServer || '' %>"
+                onclick="editTrunkFromData(this)"
+                class="text-blue-600 hover:text-blue-800">
                 <i class="fas fa-edit"></i>
               </button>
               <form action="/api/trunks/<%= trunk.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this trunk?');">

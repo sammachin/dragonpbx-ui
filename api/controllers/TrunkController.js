@@ -8,12 +8,18 @@ module.exports = {
       const trunkData = {
         label: req.body.label,
         domain: req.params.domainId,
+        authType: req.body.authType || 'ip',
         inbound: req.body.inbound ? JSON.parse(req.body.inbound) : [],
         outbound: req.body.outbound ? JSON.parse(req.body.outbound) : { host: '' },
         codecs: req.body.codecs ? JSON.parse(req.body.codecs) : [],
-        dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {}
+        dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {},
+        authenticationUsername: req.body.authenticationUsername || null,
+        authenticationPassword: req.body.authenticationPassword || null,
+        registrationUsername: req.body.registrationUsername || null,
+        registrationPassword: req.body.registrationPassword || null,
+        registrationServer: req.body.registrationServer || null
       };
-      
+
       const trunk = await Trunk.create(trunkData).fetch();
       return res.redirect('/domains/' + req.params.domainId);
     } catch (err) {
@@ -28,15 +34,21 @@ module.exports = {
       if (!trunk) {
         return res.notFound();
       }
-      
+
       const updateData = {
         label: req.body.label,
+        authType: req.body.authType || 'ip',
         inbound: req.body.inbound ? JSON.parse(req.body.inbound) : [],
         outbound: req.body.outbound ? JSON.parse(req.body.outbound) : {},
         codecs: req.body.codecs ? JSON.parse(req.body.codecs) : [],
-        dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {}
+        dialplan: req.body.dialplan ? JSON.parse(req.body.dialplan) : {},
+        authenticationUsername: req.body.authenticationUsername || null,
+        authenticationPassword: req.body.authenticationPassword || null,
+        registrationUsername: req.body.registrationUsername || null,
+        registrationPassword: req.body.registrationPassword || null,
+        registrationServer: req.body.registrationServer || null
       };
-      
+
       await Trunk.updateOne({ id: req.params.id }).set(updateData);
       return res.redirect('/domains/' + trunk.domain);
     } catch (err) {

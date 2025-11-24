@@ -9,6 +9,12 @@ module.exports = {
       unique: false,
       description: 'label'
     },
+    authType: {
+      type: 'string',
+      isIn: ['ip', 'registration', 'authentication'],
+      defaultsTo: 'ip',
+      description: 'Authentication type: ip-based, registration-based, or authentication-based'
+    },
     inbound: {
       type: 'json',
       defaultsTo: [],
@@ -18,6 +24,31 @@ module.exports = {
         const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
         return value.every(ip => cidrRegex.test(ip));
       }
+    },
+    registrationUsername: {
+      type: 'string',
+      allowNull: true,
+      description: 'Username for registration-based authentication'
+    },
+    registrationPassword: {
+      type: 'string',
+      allowNull: true,
+      description: 'Password for registration-based authentication'
+    },
+    registrationServer: {
+      type: 'string',
+      allowNull: true,
+      description: 'Server for registration-based authentication'
+    },
+    authenticationUsername: {
+      type: 'string',
+      allowNull: true,
+      description: 'Username for authentication-based inbound'
+    },
+    authenticationPassword: {
+      type: 'string',
+      allowNull: true,
+      description: 'Password for authentication-based inbound'
     },
     
     outbound: {

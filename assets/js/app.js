@@ -82,6 +82,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     });
   }
+
+  // Initialize trunk auth type toggle
+  const trunkAuthTypeRadios = document.querySelectorAll('input[name="trunkAuthType"]');
+  if (trunkAuthTypeRadios.length > 0) {
+    // Set initial state based on checked radio button
+    const ipBasedFields = document.getElementById('ipBasedFields');
+    const registrationFields = document.getElementById('registrationFields');
+    if (ipBasedFields && registrationFields) {
+      toggleTrunkAuthType();
+    }
+  }
 });
 
 // ========== CLIENT DIALPLAN FUNCTIONS ==========
@@ -331,33 +342,118 @@ function updateInboundDisplay() {
 
 // ========== TRUNK FORM FUNCTIONS ==========
 
-function editTrunk(id, label, inbound, outbound, codecs, dialplan) {
+function toggleTrunkAuthType() {
+  const authTypeElement = document.querySelector('input[name="trunkAuthType"]:checked');
+  if (!authTypeElement) {
+    console.log('No trunkAuthType radio button is checked');
+    return;
+  }
+
+  const authType = authTypeElement.value;
+  const ipBasedFields = document.getElementById('ipBasedFields');
+  const authenticationFields = document.getElementById('authenticationFields');
+  const registrationFields = document.getElementById('registrationFields');
+  const authTypeHidden = document.getElementById('authTypeHidden');
+
+  console.log('toggleTrunkAuthType called - authType:', authType);
+  console.log('ipBasedFields:', ipBasedFields);
+  console.log('authenticationFields:', authenticationFields);
+  console.log('registrationFields:', registrationFields);
+
+  if (!ipBasedFields || !authenticationFields || !registrationFields) {
+    console.log('One or more field containers not found');
+    return;
+  }
+
+  // Update hidden field for form submission
+  if (authTypeHidden) {
+    authTypeHidden.value = authType;
+  }
+
+  // Hide all fields first
+  ipBasedFields.classList.add('hidden');
+  authenticationFields.classList.add('hidden');
+  registrationFields.classList.add('hidden');
+
+  // Show the selected fields
+  if (authType === 'ip') {
+    console.log('Showing IP-based fields');
+    ipBasedFields.classList.remove('hidden');
+  } else if (authType === 'authentication') {
+    console.log('Showing authentication fields');
+    authenticationFields.classList.remove('hidden');
+  } else if (authType === 'registration') {
+    console.log('Showing registration fields');
+    registrationFields.classList.remove('hidden');
+  }
+}
+
+function editTrunkFromData(button) {
+  const id = button.dataset.trunkId;
+  const label = button.dataset.trunkLabel;
+  const authType = button.dataset.trunkAuthtype;
+  const inbound = JSON.parse(button.dataset.trunkInbound);
+  const outbound = JSON.parse(button.dataset.trunkOutbound);
+  const codecs = JSON.parse(button.dataset.trunkCodecs);
+  const dialplan = JSON.parse(button.dataset.trunkDialplan);
+  const regUsername = button.dataset.trunkRegUsername;
+  const regPassword = button.dataset.trunkRegPassword;
+  const regServer = button.dataset.trunkRegServer;
+  const authUsername = button.dataset.trunkAuthUsername;
+  const authPassword = button.dataset.trunkAuthPassword;
+
+  editTrunk(id, label, authType, inbound, outbound, codecs, dialplan, regUsername, regPassword, regServer, authUsername, authPassword);
+}
+
+function editTrunk(id, label, authType, inbound, outbound, codecs, dialplan, regUsername, regPassword, regServer, authUsername, authPassword) {
   editingTrunkId = id;
-  
+
   document.getElementById('trunkForm').classList.remove('hidden');
   document.getElementById('trunkFormTitle').textContent = 'Edit Trunk';
-  
+
   const form = document.getElementById('addTrunkForm');
   form.action = '/api/trunks/' + id + '?_method=PUT';
   document.getElementById('trunkFormMethod').value = 'PUT';
   document.getElementById('trunkId').value = id;
-  
+
   document.getElementById('trunkLabel').value = label;
-  
+
+  // Set authentication type
+  let authTypeRadio;
+  if (authType === 'registration') {
+    authTypeRadio = document.getElementById('trunkAuthTypeRegistration');
+  } else if (authType === 'authentication') {
+    authTypeRadio = document.getElementById('trunkAuthTypeAuthentication');
+  } else {
+    authTypeRadio = document.getElementById('trunkAuthTypeIp');
+  }
+  authTypeRadio.checked = true;
+  toggleTrunkAuthType();
+
+  // Set IP-based fields
   inboundIps = inbound || [];
   updateInboundDisplay();
-  
+
   document.getElementById('outboundHost').value = outbound.host || '';
   document.getElementById('outboundUsername').value = outbound.username || '';
   document.getElementById('outboundPassword').value = outbound.password || '';
-  
+
+  // Set authentication fields
+  document.getElementById('authenticationUsername').value = authUsername || '';
+  document.getElementById('authenticationPassword').value = authPassword || '';
+
+  // Set registration fields
+  document.getElementById('registrationUsername').value = regUsername || '';
+  document.getElementById('registrationPassword').value = regPassword || '';
+  document.getElementById('registrationServer').value = regServer || '';
+
   document.querySelectorAll('.trunk-codec-checkbox').forEach(cb => {
     cb.checked = codecs.includes(cb.value);
   });
 
   trunkDialplanData = dialplan || {};
   updateTrunkDialplanDisplay();
-  
+
   document.getElementById('trunkForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -378,11 +474,11 @@ function cancelTrunkEdit() {
 function resetTrunkForm() {
   editingTrunkId = null;
   document.getElementById('trunkFormTitle').textContent = 'New Trunk';
-  
+
   if (currentDomainId) {
     document.getElementById('addTrunkForm').action = '/api/domains/' + currentDomainId + '/trunks';
   }
-  
+
   document.getElementById('trunkFormMethod').value = '';
   document.getElementById('trunkId').value = '';
   document.getElementById('addTrunkForm').reset();
@@ -390,6 +486,11 @@ function resetTrunkForm() {
   inboundIps = [];
   updateTrunkDialplanDisplay();
   updateInboundDisplay();
+
+  // Reset to IP-based authentication (default)
+  document.getElementById('trunkAuthTypeIp').checked = true;
+  document.getElementById('authTypeHidden').value = 'ip';
+  toggleTrunkAuthType();
 }
 
 // ========== UTILITY FUNCTIONS ==========
