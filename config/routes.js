@@ -37,6 +37,12 @@ module.exports.routes = {
   // User-Domain assignment
   'POST /api/users/:userId/domains/:domainId': 'UserController.assignDomain',
   'DELETE /api/users/:userId/domains/:domainId': 'UserController.unassignDomain',
+
+  // API Token management (admin only)
+  'GET /tokens': 'ViewController.tokens',
+  'POST /api/tokens': 'ApiTokenController.create',
+  'PUT /api/tokens/:id': 'ApiTokenController.update',
+  'DELETE /api/tokens/:id': 'ApiTokenController.destroy',
   
   // ===== REST API v1 (Bearer Token Authentication) =====
   'GET /api/v1/domains': 'DomainApiController.getAll',

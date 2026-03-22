@@ -1,7 +1,8 @@
 /**
  * api/controllers/DomainApiController.js
- * 
- * REST API endpoints for domains
+ *
+ * REST API endpoints for domains.
+ * Supports master token (all domains) and scoped tokens (specific domains).
  */
 
 module.exports = {
@@ -11,34 +12,31 @@ module.exports = {
    */
   getOne: async function(req, res) {
     try {
-      const domainId = req.params.id;
-      const user = req.apiUser;
-      
-      // Find the domain with all related data
+      const domainId = parseInt(req.params.id, 10);
+
       const domain = await Domain.findOne({ id: domainId })
         .populate('clients')
         .populate('trunks')
         .populate('users');
-      
+
       if (!domain) {
         return res.status(404).json({
           error: 'Not Found',
           message: `Domain with ID ${domainId} not found`
         });
       }
-      
-      // Check if user has access to this domain
-      if (user.role !== 'admin') {
-        const userDomainIds = user.domains.map(d => d.id);
-        if (!userDomainIds.includes(domain.id)) {
+
+      // Access control: scoped tokens can only access their assigned domains
+      if (req.apiToken) {
+        const allowedIds = req.apiToken.domains.map(d => d.id);
+        if (!allowedIds.includes(domain.id)) {
           return res.status(403).json({
             error: 'Forbidden',
-            message: 'You do not have access to this domain'
+            message: 'Token does not have access to this domain'
           });
         }
       }
-      
-      // Return the domain data
+
       return res.json({
         domain: {
           id: domain.id,
@@ -47,7 +45,7 @@ module.exports = {
           updatedAt: domain.updatedAt,
           clients: domain.clients.map(client => ({
             id: client.id,
-            label: client.label,  
+            label: client.label,
             username: client.username,
             authType: client.authType,
             password: client.password,
@@ -82,7 +80,7 @@ module.exports = {
           }))
         }
       });
-      
+
     } catch (err) {
       sails.log.error('Error in DomainApiController.getOne:', err);
       return res.status(500).json({
@@ -91,32 +89,30 @@ module.exports = {
       });
     }
   },
-  
+
   /**
-   * Get all domains accessible to the authenticated user
+   * Get all domains accessible to the authenticated token
    * GET /api/v1/domains
    */
   getAll: async function(req, res) {
     try {
-      const user = req.apiUser;
       let domains;
-      
-      if (user.role === 'admin') {
-        // Admin sees all domains
-        domains = await Domain.find()
-          .populate('clients')
-          .populate('trunks')
-          .populate('users');
-      } else {
-        // Regular users see only their assigned domains
-        const domainIds = user.domains.map(d => d.id);
+
+      if (req.apiToken) {
+        // Scoped token: only assigned domains
+        const domainIds = req.apiToken.domains.map(d => d.id);
         domains = await Domain.find({ id: domainIds })
           .populate('clients')
           .populate('trunks')
           .populate('users');
+      } else {
+        // Master token: all domains
+        domains = await Domain.find()
+          .populate('clients')
+          .populate('trunks')
+          .populate('users');
       }
-      
-      // Format the response
+
       const formattedDomains = domains.map(domain => ({
         id: domain.id,
         domain: domain.domain,
@@ -149,14 +145,12 @@ module.exports = {
             updatedAt: trunk.updatedAt
           };
 
-          // Only include registration fields if authType is 'registration'
           if (trunk.authType === 'registration') {
             trunkData.regUser = trunk.registrationUsername;
             trunkData.regPass = trunk.registrationPassword;
             trunkData.regHost = trunk.registrationServer;
           }
 
-          // Only include authentication fields if authType is 'authentication'
           if (trunk.authType === 'authentication') {
             trunkData.authUser = trunk.authenticationUsername;
             trunkData.authPass = trunk.authenticationPassword;
@@ -172,12 +166,12 @@ module.exports = {
           role: u.role
         }))
       }));
-      
+
       return res.json({
         domains: formattedDomains,
         count: formattedDomains.length
       });
-      
+
     } catch (err) {
       sails.log.error('Error in DomainApiController.getAll:', err);
       return res.status(500).json({

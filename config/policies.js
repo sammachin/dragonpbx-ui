@@ -14,7 +14,12 @@ module.exports.policies = {
   'ViewController': {
     'users': ['isLoggedIn', 'isAdmin'],
     'newUser': ['isLoggedIn', 'isAdmin'],
-    'editUser': ['isLoggedIn', 'isAdmin']
+    'editUser': ['isLoggedIn', 'isAdmin'],
+    'tokens': ['isLoggedIn', 'isAdmin']
+  },
+
+  'ApiTokenController': {
+    '*': ['isLoggedIn', 'isAdmin']
   },
 
   // Domain Management requires admin

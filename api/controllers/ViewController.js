@@ -144,6 +144,22 @@ module.exports = {
     }
   },
   
+  tokens: async function(req, res) {
+    try {
+      const tokens = await ApiToken.find().populate('domains');
+      const domains = await Domain.find();
+
+      return res.view('pages/tokens', {
+        tokens,
+        domains,
+        currentUser: { role: req.session.userRole },
+        layout: 'layouts/layout'
+      });
+    } catch (err) {
+      return res.serverError(err);
+    }
+  },
+
   editUser: async function(req, res) {
     try {
       const user = await User.findOne({ id: req.params.id })

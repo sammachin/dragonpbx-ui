@@ -23,6 +23,11 @@ module.exports = {
     users: {
       collection: 'user',
       via: 'domains'
+    },
+
+    apiTokens: {
+      collection: 'apitoken',
+      via: 'domains'
     }
   }
 };

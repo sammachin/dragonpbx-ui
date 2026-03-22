@@ -1,0 +1,204 @@
+<div class="container mx-auto px-6 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-3xl font-bold text-gray-900">API Tokens</h2>
+    <button onclick="document.getElementById('create-modal').classList.remove('hidden')" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+      <i class="fas fa-plus"></i>
+      Create Token
+    </button>
+  </div>
+
+  <% if (process.env.MASTER_API_TOKEN) { %>
+  <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center gap-2 text-green-800">
+      <i class="fas fa-key"></i>
+      <span class="font-medium">Master Token</span>
+      <span class="text-green-600 text-sm">— Active (set via MASTER_API_TOKEN env var, all domains)</span>
+    </div>
+  </div>
+  <% } else { %>
+  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+    <div class="flex items-center gap-2 text-gray-500">
+      <i class="fas fa-key"></i>
+      <span class="font-medium">Master Token</span>
+      <span class="text-sm">— Not configured (set MASTER_API_TOKEN env var to enable)</span>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Label</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Token</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domains</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% if (tokens.length === 0) { %>
+          <tr>
+            <td colspan="5" class="px-6 py-8 text-center text-gray-500">No scoped tokens created yet.</td>
+          </tr>
+        <% } %>
+        <% tokens.forEach(function(t) { %>
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900"><%= t.label %></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2">
+                <code class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded"><%= t.token.substring(0, 8) %>...<%= t.token.substring(t.token.length - 4) %></code>
+                <button onclick="navigator.clipboard.writeText('<%= t.token %>')" class="text-gray-400 hover:text-blue-600" title="Copy token">
+                  <i class="fas fa-copy text-xs"></i>
+                </button>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1">
+                <% if (t.domains.length === 0) { %>
+                  <span class="text-xs text-gray-400">None</span>
+                <% } %>
+                <% t.domains.forEach(function(d) { %>
+                  <span class="px-2 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-800"><%= d.domain %></span>
+                <% }); %>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-500"><%= new Date(t.createdAt).toLocaleDateString() %></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <button onclick="openEditModal(<%= t.id %>, '<%= t.label %>', [<%= t.domains.map(d => d.id).join(',') %>])" class="text-blue-600 hover:text-blue-800 mr-3">
+                <i class="fas fa-edit"></i>
+              </button>
+              <form action="/api/tokens/<%= t.id %>?_method=DELETE" method="POST" class="inline" onsubmit="return confirm('Delete this token?');">
+                <button type="submit" class="text-red-600 hover:text-red-800">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Token Modal -->
+<div id="create-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-gray-900">Create API Token</h3>
+      <button onclick="document.getElementById('create-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form action="/api/tokens" method="POST" id="create-form">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+        <input type="text" name="label" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Provisioning Server">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Domains</label>
+        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1">
+          <% domains.forEach(function(d) { %>
+            <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">
+              <input type="checkbox" name="domains" value="<%= d.id %>" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+              <span class="text-sm text-gray-700"><%= d.domain %></span>
+            </label>
+          <% }); %>
+          <% if (domains.length === 0) { %>
+            <p class="text-sm text-gray-400 px-2">No domains available</p>
+          <% } %>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="document.getElementById('create-modal').classList.add('hidden')" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create</button>
+      </div>
+    </form>
+    <div id="token-result" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+      <p class="text-sm text-green-800 font-medium mb-2">Token created! Copy it now — it won't be shown again.</p>
+      <div class="flex items-center gap-2">
+        <code id="new-token-value" class="text-xs bg-white px-3 py-2 rounded border flex-1 break-all"></code>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('new-token-value').textContent)" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Token Modal -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold text-gray-900">Edit API Token</h3>
+      <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <form id="edit-form" method="POST">
+      <input type="hidden" name="_method" value="PUT">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+        <input type="text" name="label" id="edit-label" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Domains</label>
+        <div class="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2 space-y-1">
+          <% domains.forEach(function(d) { %>
+            <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">
+              <input type="checkbox" name="domains" value="<%= d.id %>" class="edit-domain-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+              <span class="text-sm text-gray-700"><%= d.domain %></span>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Handle create form via fetch to show the token value
+document.getElementById('create-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  const body = { label: formData.get('label'), domains: formData.getAll('domains') };
+
+  try {
+    const resp = await fetch('/api/tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('new-token-value').textContent = data.token;
+      document.getElementById('token-result').classList.remove('hidden');
+      this.classList.add('hidden');
+    } else {
+      alert(data.error || 'Failed to create token');
+    }
+  } catch (err) {
+    alert('Failed to create token');
+  }
+});
+
+function openEditModal(id, label, domainIds) {
+  document.getElementById('edit-form').action = '/api/tokens/' + id;
+  document.getElementById('edit-label').value = label;
+
+  // Reset all checkboxes then check the assigned ones
+  document.querySelectorAll('.edit-domain-checkbox').forEach(function(cb) {
+    cb.checked = domainIds.includes(parseInt(cb.value, 10));
+  });
+
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+</script>
