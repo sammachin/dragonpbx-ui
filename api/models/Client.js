@@ -41,9 +41,8 @@ module.exports = {
       defaultsTo: [],
       description: 'Array of allowed codecs (standard auth only)',
       custom: function(value) {
-        const allowedCodecs = ['PCMU', 'PCMA', 'G722', 'opus', 'GSM'];
         if (!Array.isArray(value)) return false;
-        return value.every(codec => allowedCodecs.includes(codec));
+        return value.every(codec => sails.config.custom.allowedCodecs.includes(codec));
       }
     },
     

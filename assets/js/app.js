@@ -19,38 +19,35 @@ document.addEventListener('DOMContentLoaded', function() {
     currentDomainId = domainIdElement.getAttribute('data-domain-id');
   }
   
-  // Handle codec checkbox conversion to JSON
-  const forms = document.querySelectorAll('form');
-  forms.forEach(form => {
-    form.addEventListener('submit', function(e) {
-      const authTypeInput = form.querySelector('input[name="authType"]:checked');
+  // Handle client codec serialization on form submit
+  const clientForm = document.getElementById('addClientForm');
+  if (clientForm) {
+    clientForm.addEventListener('submit', function(e) {
+      if (!checkUnaddedInputs(e, ['dialplanDigits', 'dialplanUrl'])) return;
+
+      const authTypeInput = clientForm.querySelector('input[name="authType"]:checked');
       const authType = authTypeInput ? authTypeInput.value : 'standard';
-      
+
       if (authType === 'standard') {
-        const codecCheckboxes = form.querySelectorAll('input[name="codecs[]"]:checked:not(:disabled)');
-        if (codecCheckboxes.length > 0) {
-          const existingInput = form.querySelector('input[name="codecs"]');
-          if (existingInput) {
-            existingInput.remove();
-          }
-          
-          const codecs = Array.from(codecCheckboxes).map(cb => cb.value);
-          const hiddenInput = document.createElement('input');
-          hiddenInput.type = 'hidden';
-          hiddenInput.name = 'codecs';
-          hiddenInput.value = JSON.stringify(codecs);
-          form.appendChild(hiddenInput);
-          
-          codecCheckboxes.forEach(cb => cb.disabled = true);
-        }
+        const codecs = getSelectedCodecs('codecSelected');
+        const existingInput = clientForm.querySelector('input[name="codecs"]');
+        if (existingInput) existingInput.remove();
+
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'codecs';
+        hiddenInput.value = JSON.stringify(codecs);
+        clientForm.appendChild(hiddenInput);
       }
     });
-  });
+  }
   
   // Handle trunk form outbound JSON building
   const trunkForm = document.getElementById('addTrunkForm');
   if (trunkForm) {
     trunkForm.addEventListener('submit', function(e) {
+      if (!checkUnaddedInputs(e, ['trunkDialplanDigits', 'trunkDialplanUrl', 'inboundIp'])) return;
+
       const outboundData = {
         host: document.getElementById('outboundHost').value.trim()
       };
@@ -64,22 +61,15 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('outboundHidden').value = JSON.stringify(outboundData);
     
     // Handle trunk codecs
-    const trunkCodecCheckboxes = trunkForm.querySelectorAll('input[name="trunkCodecs[]"]:checked:not(:disabled)');
-    if (trunkCodecCheckboxes.length > 0) {
+    const codecs = getSelectedCodecs('trunkCodecSelected');
     const existingInput = trunkForm.querySelector('input[name="codecs"]');
-    if (existingInput) {
-        existingInput.remove();
-    }
-    
-    const codecs = Array.from(trunkCodecCheckboxes).map(cb => cb.value);
+    if (existingInput) existingInput.remove();
+
     const hiddenInput = document.createElement('input');
     hiddenInput.type = 'hidden';
     hiddenInput.name = 'codecs';
     hiddenInput.value = JSON.stringify(codecs);
     trunkForm.appendChild(hiddenInput);
-    
-    trunkCodecCheckboxes.forEach(cb => cb.disabled = true);
-    }
     });
   }
 
@@ -164,11 +154,9 @@ function editClient(id, label, username, authType, password, reghook, codecs, di
   
   if (authType === 'standard') {
     document.getElementById('passwordField').value = password;
-    
-    document.querySelectorAll('.codec-checkbox').forEach(cb => {
-      cb.checked = codecs.includes(cb.value);
-    });
-    
+
+    setSelectedCodecs('codecAvailable', 'codecSelected', codecs || [], 'addCodec', 'removeCodec', 'moveCodecUp', 'moveCodecDown');
+
     dialplanData = dialplan || {};
     updateDialplanDisplay();
   } else {
@@ -205,6 +193,7 @@ function resetClientForm() {
   document.getElementById('addClientForm').reset();
   dialplanData = {};
   updateDialplanDisplay();
+  resetCodecPanels('codecAvailable', 'codecSelected', 'addCodec');
   toggleAuthFields();
 }
 
@@ -224,17 +213,15 @@ function toggleAuthFields() {
     passwordField.required = true;
     reghookField.required = false;
     
-    document.querySelectorAll('.codec-checkbox').forEach(cb => cb.disabled = false);
+    document.getElementById('codecAvailable').closest('.mb-3').classList.remove('opacity-50', 'pointer-events-none');
   } else {
     standardFields.classList.add('hidden');
     reghookFields.classList.remove('hidden');
     passwordField.required = false;
     reghookField.required = true;
-    
-    document.querySelectorAll('.codec-checkbox').forEach(cb => {
-      cb.disabled = true;
-      cb.checked = false;
-    });
+
+    document.getElementById('codecAvailable').closest('.mb-3').classList.add('opacity-50', 'pointer-events-none');
+    resetCodecPanels('codecAvailable', 'codecSelected', 'addCodec');
   }
 }
 
@@ -447,9 +434,7 @@ function editTrunk(id, label, authType, inbound, outbound, codecs, dialplan, reg
   document.getElementById('registrationPassword').value = regPassword || '';
   document.getElementById('registrationServer').value = regServer || '';
 
-  document.querySelectorAll('.trunk-codec-checkbox').forEach(cb => {
-    cb.checked = codecs.includes(cb.value);
-  });
+  setSelectedCodecs('trunkCodecAvailable', 'trunkCodecSelected', codecs || [], 'addTrunkCodec', 'removeTrunkCodec', 'moveTrunkCodecUp', 'moveTrunkCodecDown');
 
   trunkDialplanData = dialplan || {};
   updateTrunkDialplanDisplay();
@@ -486,11 +471,160 @@ function resetTrunkForm() {
   inboundIps = [];
   updateTrunkDialplanDisplay();
   updateInboundDisplay();
+  resetCodecPanels('trunkCodecAvailable', 'trunkCodecSelected', 'addTrunkCodec');
 
   // Reset to IP-based authentication (default)
   document.getElementById('trunkAuthTypeIp').checked = true;
   document.getElementById('authTypeHidden').value = 'ip';
   toggleTrunkAuthType();
+}
+
+// ========== UNADDED INPUT WARNING ==========
+
+function checkUnaddedInputs(e, fieldIds) {
+  // Clear previous warnings
+  fieldIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('ring-2', 'ring-red-500', 'bg-red-50');
+  });
+
+  const unadded = fieldIds.filter(id => {
+    const el = document.getElementById(id);
+    return el && el.value.trim() !== '';
+  });
+
+  if (unadded.length > 0) {
+    unadded.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.add('ring-2', 'ring-red-500', 'bg-red-50');
+      }
+    });
+    // Scroll the first highlighted field into view
+    const firstEl = document.getElementById(unadded[0]);
+    if (firstEl) firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Prevent submit, paint highlights, then ask user
+    e.preventDefault();
+    requestAnimationFrame(() => {
+      if (confirm('You have unadded entries in the form. Submit anyway?')) {
+        e.target.submit();
+      }
+    });
+    return false;
+  }
+  return true;
+}
+
+// ========== CODEC SELECTION FUNCTIONS ==========
+
+function getSelectedCodecs(selectedContainerId) {
+  const container = document.getElementById(selectedContainerId);
+  return Array.from(container.querySelectorAll('[data-codec]')).map(el => el.dataset.codec);
+}
+
+function createSelectedItem(codec, removeFn, upFn, downFn) {
+  const item = document.createElement('div');
+  item.dataset.codec = codec;
+  item.className = 'flex items-center gap-1 bg-blue-50 border border-blue-200 rounded px-2 py-1.5 text-sm';
+  item.innerHTML = `
+    <span class="flex-1 font-medium text-blue-800">${escapeHtml(codec)}</span>
+    <button type="button" onclick="${upFn}('${escapeHtml(codec)}')" class="text-gray-400 hover:text-gray-700 px-1" title="Move up"><i class="fas fa-chevron-up text-xs"></i></button>
+    <button type="button" onclick="${downFn}('${escapeHtml(codec)}')" class="text-gray-400 hover:text-gray-700 px-1" title="Move down"><i class="fas fa-chevron-down text-xs"></i></button>
+    <button type="button" onclick="${removeFn}('${escapeHtml(codec)}')" class="text-red-400 hover:text-red-600 px-1" title="Remove"><i class="fas fa-times text-xs"></i></button>
+  `;
+  return item;
+}
+
+function setSelectedCodecs(availableId, selectedId, codecs, addFn, removeFn, upFn, downFn) {
+  const available = document.getElementById(availableId);
+  const selected = document.getElementById(selectedId);
+
+  // Show all available items
+  available.querySelectorAll('[data-codec]').forEach(el => el.classList.remove('hidden'));
+
+  // Clear selected
+  selected.innerHTML = '';
+
+  // Add each codec to selected and hide from available
+  codecs.forEach(codec => {
+    const availItem = available.querySelector(`[data-codec="${codec}"]`);
+    if (availItem) availItem.classList.add('hidden');
+    selected.appendChild(createSelectedItem(codec, removeFn, upFn, downFn));
+  });
+}
+
+function resetCodecPanels(availableId, selectedId, addFn) {
+  document.getElementById(availableId).querySelectorAll('[data-codec]').forEach(el => el.classList.remove('hidden'));
+  document.getElementById(selectedId).innerHTML = '';
+}
+
+// Client codec functions
+function addCodec(codec) {
+  const available = document.getElementById('codecAvailable');
+  const selected = document.getElementById('codecSelected');
+  const item = available.querySelector(`[data-codec="${codec}"]`);
+  if (item) item.classList.add('hidden');
+  selected.appendChild(createSelectedItem(codec, 'removeCodec', 'moveCodecUp', 'moveCodecDown'));
+}
+
+function removeCodec(codec) {
+  const available = document.getElementById('codecAvailable');
+  const selected = document.getElementById('codecSelected');
+  const item = selected.querySelector(`[data-codec="${codec}"]`);
+  if (item) item.remove();
+  const availItem = available.querySelector(`[data-codec="${codec}"]`);
+  if (availItem) availItem.classList.remove('hidden');
+}
+
+function moveCodecUp(codec) {
+  const container = document.getElementById('codecSelected');
+  const item = container.querySelector(`[data-codec="${codec}"]`);
+  if (item && item.previousElementSibling) {
+    container.insertBefore(item, item.previousElementSibling);
+  }
+}
+
+function moveCodecDown(codec) {
+  const container = document.getElementById('codecSelected');
+  const item = container.querySelector(`[data-codec="${codec}"]`);
+  if (item && item.nextElementSibling) {
+    container.insertBefore(item.nextElementSibling, item);
+  }
+}
+
+// Trunk codec functions
+function addTrunkCodec(codec) {
+  const available = document.getElementById('trunkCodecAvailable');
+  const selected = document.getElementById('trunkCodecSelected');
+  const item = available.querySelector(`[data-codec="${codec}"]`);
+  if (item) item.classList.add('hidden');
+  selected.appendChild(createSelectedItem(codec, 'removeTrunkCodec', 'moveTrunkCodecUp', 'moveTrunkCodecDown'));
+}
+
+function removeTrunkCodec(codec) {
+  const available = document.getElementById('trunkCodecAvailable');
+  const selected = document.getElementById('trunkCodecSelected');
+  const item = selected.querySelector(`[data-codec="${codec}"]`);
+  if (item) item.remove();
+  const availItem = available.querySelector(`[data-codec="${codec}"]`);
+  if (availItem) availItem.classList.remove('hidden');
+}
+
+function moveTrunkCodecUp(codec) {
+  const container = document.getElementById('trunkCodecSelected');
+  const item = container.querySelector(`[data-codec="${codec}"]`);
+  if (item && item.previousElementSibling) {
+    container.insertBefore(item, item.previousElementSibling);
+  }
+}
+
+function moveTrunkCodecDown(codec) {
+  const container = document.getElementById('trunkCodecSelected');
+  const item = container.querySelector(`[data-codec="${codec}"]`);
+  if (item && item.nextElementSibling) {
+    container.insertBefore(item.nextElementSibling, item);
+  }
 }
 
 // ========== UTILITY FUNCTIONS ==========

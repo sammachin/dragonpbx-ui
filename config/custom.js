@@ -19,4 +19,6 @@ module.exports.custom = {
   // stripeSecret: 'sk_test_Zzd814nldl91104qor5911gjald',
   // …
 
+  allowedCodecs: (process.env.ALLOWED_CODECS || 'PCMU,PCMA,G722,opus,GSM,direct').split(',').map(s => s.trim()),
+
 };

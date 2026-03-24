@@ -73,7 +73,7 @@ module.exports = {
         }
       }
       
-      const allowedCodecs = ['PCMU', 'PCMA', 'G722', 'opus', 'GSM'];
+      const allowedCodecs = sails.config.custom.allowedCodecs;
       
       return res.view('pages/domain-detail', { 
         domain,

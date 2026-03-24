@@ -74,13 +74,22 @@
           
           <div class="mb-3">
             <label class="block text-sm font-medium text-gray-700 mb-2">Codecs</label>
-            <div class="flex flex-wrap gap-2" id="codecCheckboxes">
-              <% allowedCodecs.forEach(function(codec) { %>
-                <label class="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer">
-                  <input type="checkbox" name="codecs[]" value="<%= codec %>" class="rounded codec-checkbox">
-                  <span class="text-sm"><%= codec %></span>
-                </label>
-              <% }); %>
+            <div class="flex gap-4">
+              <div class="flex-1">
+                <div class="text-xs text-gray-500 mb-1">Available</div>
+                <div id="codecAvailable" class="border border-gray-200 rounded-lg p-2 min-h-[60px] space-y-1">
+                  <% allowedCodecs.forEach(function(codec) { %>
+                    <button type="button" data-codec="<%= codec %>" onclick="addCodec('<%= codec %>')" class="codec-available-item w-full text-left px-3 py-1.5 bg-gray-100 rounded hover:bg-blue-100 text-sm cursor-pointer">
+                      <%= codec %>
+                    </button>
+                  <% }); %>
+                </div>
+              </div>
+              <div class="flex-1">
+                <div class="text-xs text-gray-500 mb-1">Selected (in priority order)</div>
+                <div id="codecSelected" class="border border-gray-200 rounded-lg p-2 min-h-[60px] space-y-1">
+                </div>
+              </div>
             </div>
           </div>
           
@@ -370,13 +379,22 @@
         
         <div class="mb-3">
           <label class="block text-sm font-medium text-gray-700 mb-2">Codecs</label>
-          <div class="flex flex-wrap gap-2" id="trunkCodecCheckboxes">
-            <% allowedCodecs.forEach(function(codec) { %>
-              <label class="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer">
-                <input type="checkbox" name="trunkCodecs[]" value="<%= codec %>" class="rounded trunk-codec-checkbox">
-                <span class="text-sm"><%= codec %></span>
-              </label>
-            <% }); %>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <div class="text-xs text-gray-500 mb-1">Available</div>
+              <div id="trunkCodecAvailable" class="border border-gray-200 rounded-lg p-2 min-h-[60px] space-y-1">
+                <% allowedCodecs.forEach(function(codec) { %>
+                  <button type="button" data-codec="<%= codec %>" onclick="addTrunkCodec('<%= codec %>')" class="trunk-codec-available-item w-full text-left px-3 py-1.5 bg-gray-100 rounded hover:bg-blue-100 text-sm cursor-pointer">
+                    <%= codec %>
+                  </button>
+                <% }); %>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="text-xs text-gray-500 mb-1">Selected (in priority order)</div>
+              <div id="trunkCodecSelected" class="border border-gray-200 rounded-lg p-2 min-h-[60px] space-y-1">
+              </div>
+            </div>
           </div>
         </div>
         
