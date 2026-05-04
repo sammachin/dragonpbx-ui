@@ -36,6 +36,13 @@ module.exports = {
       description: 'Key-value pairs for dialplan configuration (standard auth only)'
     },
     
+    maxClients: {
+      type: 'number',
+      allowNull: true,
+      defaultsTo: 1,
+      description: 'Maximum number of simultaneous registrations (standard auth only)'
+    },
+
     codecs: {
       type: 'json',
       defaultsTo: [],

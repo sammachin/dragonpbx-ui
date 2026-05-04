@@ -135,7 +135,7 @@ function updateDialplanDisplay() {
 
 // ========== CLIENT FORM FUNCTIONS ==========
 
-function editClient(id, label, username, authType, password, reghook, codecs, dialplan) {
+function editClient(id, label, username, authType, password, reghook, codecs, dialplan, maxClients) {
   editingClientId = id;
   
   document.getElementById('clientForm').classList.remove('hidden');
@@ -154,6 +154,7 @@ function editClient(id, label, username, authType, password, reghook, codecs, di
   
   if (authType === 'standard') {
     document.getElementById('passwordField').value = password;
+    document.getElementById('maxClientsField').value = maxClients || '';
 
     setSelectedCodecs('codecAvailable', 'codecSelected', codecs || [], 'addCodec', 'removeCodec', 'moveCodecUp', 'moveCodecDown');
 

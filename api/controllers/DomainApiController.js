@@ -52,6 +52,7 @@ module.exports = {
             reghook: client.reghook,
             codecs: client.codecs,
             dialplan: client.dialplan,
+            maxClients: client.maxClients,
             createdAt: client.createdAt,
             updatedAt: client.updatedAt
           })),
@@ -129,6 +130,7 @@ module.exports = {
           reghook: client.reghook,
           codecs: client.codecs,
           dialplan: client.dialplan,
+          maxClients: client.maxClients,
           createdAt: client.createdAt,
           updatedAt: client.updatedAt
         })),

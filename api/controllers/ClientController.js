@@ -17,6 +17,7 @@ module.exports = {
         clientData.password = req.body.password;
         clientData.codecs = req.body.codecs ? JSON.parse(req.body.codecs) : [];
         clientData.dialplan = req.body.dialplan ? JSON.parse(req.body.dialplan) : {};
+        clientData.maxClients = req.body.maxClients ? parseInt(req.body.maxClients, 10) : 1;
       } else if (authType === 'reghook') {
         clientData.reghook = req.body.reghook;
       }
@@ -47,12 +48,14 @@ module.exports = {
         updateData.password = req.body.password;
         updateData.codecs = req.body.codecs ? JSON.parse(req.body.codecs) : [];
         updateData.dialplan = req.body.dialplan ? JSON.parse(req.body.dialplan) : {};
+        updateData.maxClients = req.body.maxClients ? parseInt(req.body.maxClients, 10) : 1;
         updateData.reghook = null;
       } else if (authType === 'reghook') {
         updateData.reghook = req.body.reghook;
         updateData.password = null;
         updateData.codecs = [];
         updateData.dialplan = {};
+        updateData.maxClients = null;
       }
       
       await Client.updateOne({ id: req.params.id }).set(updateData);
