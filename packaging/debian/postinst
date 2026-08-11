@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# dragonpbx-ui postinst: service user, persistent datastore dir, enable + start.
+set -e
+
+case "$1" in
+  configure)
+    if ! id -u dragonpbx-ui >/dev/null 2>&1; then
+      adduser --system --group --home /opt/dragonpbx-ui --no-create-home \
+              --shell /usr/sbin/nologin dragonpbx-ui
+    fi
+
+    # Datastore lives outside the app dir so upgrades don't wipe domains/tokens.
+    mkdir -p /var/lib/dragonpbx-ui/db
+    # The Sails app writes compiled assets to app/.tmp at lift, so it needs to
+    # own the app tree as well.
+    chown -R dragonpbx-ui:dragonpbx-ui /opt/dragonpbx-ui /var/lib/dragonpbx-ui || true
+
+    if [ -d /run/systemd/system ]; then
+      systemctl daemon-reload || true
+      systemctl enable dragonpbx-ui.service || true
+      systemctl restart dragonpbx-ui.service || true
+    fi
+
+    # Enable the nginx reverse-proxy site. Our site is `default_server`, so drop
+    # the stock default to avoid a duplicate-default_server conflict.
+    if command -v nginx >/dev/null 2>&1; then
+      ln -sf /etc/nginx/sites-available/dragonpbx-ui /etc/nginx/sites-enabled/dragonpbx-ui
+      rm -f /etc/nginx/sites-enabled/default
+      if [ -d /run/systemd/system ] && nginx -t >/dev/null 2>&1; then
+        systemctl reload nginx 2>/dev/null || systemctl restart nginx 2>/dev/null || true
+      fi
+    fi
+    ;;
+  abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+esac
+
+exit 0

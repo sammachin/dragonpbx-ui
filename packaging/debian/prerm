@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# dragonpbx-ui prerm: stop the service before removal/upgrade.
+set -e
+
+if [ -d /run/systemd/system ]; then
+  systemctl stop dragonpbx-ui.service 2>/dev/null || true
+fi
+
+exit 0

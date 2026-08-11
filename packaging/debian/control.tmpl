@@ -1,0 +1,15 @@
+Package: dragonpbx-ui
+Version: __VERSION__
+Section: net
+Priority: optional
+Architecture: __ARCH__
+Installed-Size: __INSTALLED_SIZE__
+Maintainer: DragonPBX <support@dragonpbx.local>
+Depends: adduser, libc6, libstdc++6, libgcc-s1, ca-certificates, nginx
+Recommends: dragonpbx, certbot, python3-certbot-nginx
+Description: DragonPBX web UI / configuration API (Sails)
+ The DragonPBX admin web UI and configuration API — a Sails.js app bundled with
+ a self-contained Node.js runtime. Serves the domain/trunk configuration that the
+ DragonPBX call-control app consumes (default port 1337). Designed to run on the
+ same host as the dragonpbx package; uses a local on-disk datastore under
+ /var/lib/dragonpbx-ui and (optionally) the host's redis for sessions.

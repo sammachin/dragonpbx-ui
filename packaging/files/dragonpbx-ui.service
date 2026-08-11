@@ -1,0 +1,19 @@
+[Unit]
+Description=DragonPBX UI (Sails admin / config API)
+After=network-online.target redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dragonpbx-ui
+Group=dragonpbx-ui
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/dragonpbx-ui/config/dragonpbx-ui.env
+WorkingDirectory=/opt/dragonpbx-ui/app
+ExecStart=/opt/dragonpbx-ui/node/bin/node app.js
+Restart=always
+RestartSec=3
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target

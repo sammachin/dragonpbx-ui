@@ -133,3 +133,12 @@ lib-cov
 *.pid
 
 .claude/settings.local.json
+
+
+################################################
+# Debian package build outputs (packaging/)
+################################################
+
+output/
+packaging/ui-pkgroot/
+*.deb

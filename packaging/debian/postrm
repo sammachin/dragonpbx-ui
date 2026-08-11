@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# dragonpbx-ui postrm: refresh systemd; on purge remove app + stored data.
+set -e
+
+if [ -d /run/systemd/system ]; then
+  systemctl daemon-reload || true
+fi
+
+case "$1" in
+  remove|purge)
+    # Drop the nginx reverse-proxy symlink and reload (the conffile in
+    # sites-available is removed by dpkg on purge).
+    if [ -L /etc/nginx/sites-enabled/dragonpbx-ui ]; then
+      rm -f /etc/nginx/sites-enabled/dragonpbx-ui
+      if command -v nginx >/dev/null 2>&1 && [ -d /run/systemd/system ] && nginx -t >/dev/null 2>&1; then
+        systemctl reload nginx 2>/dev/null || true
+      fi
+    fi
+    ;;
+esac
+
+case "$1" in
+  purge)
+    rm -rf /opt/dragonpbx-ui /var/lib/dragonpbx-ui 2>/dev/null || true
+    ;;
+esac
+
+exit 0
